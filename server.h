@@ -3,13 +3,18 @@
 
 namespace fastcgi {
     class responder;
+    class request;
     class server {
     private:
         int sockfd;
 
+        request *reqList;
+
         responder * handler;
 
-        void newConnection(int fd);
+        void connection(int fd);
+
+        int read(int fd, unsigned char *buffer, int bufferSize);
 
     public:
         server(responder * res, int port = 8080);

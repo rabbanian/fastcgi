@@ -35,11 +35,12 @@
 #define FCGI_UNKNOWN_ROLE	3
 
 //the maximum number of concurrent transport connections this application will accept, e.g. 1 or 10
-#define FCGI_MAX_CONNS		1
+#define FCGI_MAX_CONNS		5
 //the maximum number of concurrent request this application will accept, e.g. 1 or 50
 #define FCGI_MAX_REQS		1
 //0 if this application does not multiplex connections (i.e. handle concurrent requests over each connection), 1 otherwise
 #define FCGI_MPXS_CONNS		0
 
+#define FCGI_BUFFER_SIZE    128
 
 #endif //FASTCGI_CONSTANTS_H

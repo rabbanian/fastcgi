@@ -3,9 +3,10 @@
 
 namespace fastcgi {
     class responder;
+    class connection;
     class request {
     private:
-        int sockfd;
+        connection * io;
         unsigned char type, flags;
         unsigned int requestId, role;
         unsigned char *contentData;
@@ -25,11 +26,7 @@ namespace fastcgi {
         void data();
 
     public:
-        request(int sock, unsigned char t, unsigned int reqId, responder * res);
-
-        int write(unsigned char *buffer, unsigned int bufferSize);
-
-        int read(unsigned char *buffer, unsigned int bufferSize);
+        request(connection * writer, unsigned char t, unsigned int reqId, responder * res);
 
         int control(unsigned char *buffer, unsigned int bufferSize);
 

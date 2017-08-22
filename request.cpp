@@ -1,31 +1,14 @@
 #include "request.h"
 #include "responder.h"
-#include <unistd.h>
+#include "connection.h"
+#include <iostream>
 
 using namespace fastcgi;
 
-request::request(int sock, unsigned char t, unsigned int reqID, responder * res)
-        : sockfd(sock), type(t), requestId(reqID), handler(res)
+request::request(connection * writer, unsigned char t, unsigned int reqID, responder * res)
+        : io(writer), type(t), requestId(reqID), handler(res)
 {
 
-}
-
-int request::write(unsigned char *buffer, unsigned int bufferSize)
-{
-    int bytesWrite = 0, result = 0;
-    while ((result = ::write(sockfd, buffer + bytesWrite, bufferSize - bytesWrite)) > 0) {
-        bytesWrite += result;
-    }
-    return 0;
-}
-
-int request::read(unsigned char * buffer, unsigned int bufferSize)
-{
-    int bytesRead = 0, result = 0;
-    while ((result = ::read(sockfd, buffer + bytesRead, bufferSize - bytesRead)) > 0) {
-        bytesRead += result;
-    }
-    return 0;
 }
 
 int request::control(unsigned char *buffer, unsigned int bufferSize)
@@ -57,6 +40,7 @@ int request::control(unsigned char *buffer, unsigned int bufferSize)
 
 void request::beginRequest()
 {
+    std::cout << "---contentData is beginRequest" << std::endl;
     role = (contentData[0] << 8) + contentData[1];
     flags = contentData[2];
     delete [] contentData;
@@ -65,17 +49,20 @@ void request::beginRequest()
 void request::abortRequest()
 {
 
+    std::cout << "---contentData is abortRequest" << std::endl;
     delete [] contentData;
 }
 
 void request::params()
 {
 
+    std::cout << "---contentData is params" << std::endl;
     delete [] contentData;
 }
 
 void request::stdIn()
 {
+    std::cout << "---contentData is stdIn" << std::endl;
     unsigned char test[196] =
             {
                     0x01, 0x06, 0x00, 0x01, 0x00, 0xa1, 0x03, 0x00,
@@ -104,13 +91,14 @@ void request::stdIn()
                     0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00
             };
-    write(test, 196);
+    io->write(test, 196);
     shouldClose = true;
     delete [] contentData;
 }
 
 void request::data()
 {
+    std::cout << "---contentData is data" << std::endl;
 
     delete [] contentData;
 }

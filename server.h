@@ -4,6 +4,8 @@
 namespace fastcgi {
     class responder;
     class request;
+    class connection;
+
     class server {
     private:
         int sockfd;
@@ -12,9 +14,13 @@ namespace fastcgi {
 
         responder * handler;
 
-        void connection(int fd);
+        struct pollfd * fds;
 
-        int read(int fd, unsigned char *buffer, int bufferSize);
+        connection ** conns;
+
+        void manage(connection * io);
+
+        void newConn(int fd);
 
     public:
         server(responder * res, int port = 8080);

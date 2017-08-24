@@ -7,6 +7,7 @@ namespace fastcgi {
     class connection {
     private:
         pollfd * fd;
+        bool shouldClose = false;
         std::condition_variable cv;
         unsigned char * inputBuffer = nullptr;
         unsigned int inputBuffSize;

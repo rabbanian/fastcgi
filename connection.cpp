@@ -22,8 +22,8 @@ connection::connection(pollfd *fd) : fd(fd)
 
 connection::~connection()
 {
-    std::cout << "calling ~connection, shit!" << std::endl;
     unique_lock<mutex> lock(writeLock);
+    std::cout << "calling ~connection!" << std::endl;
     ::close(fd->fd);
     fd->fd = -1;
     fd->events = 0;
@@ -38,9 +38,11 @@ void connection::readFd()
     long bytesRead = ::read(fd->fd, inputBuffer + inputBytes, inputBuffSize - inputBytes);
     if (bytesRead > 0)
         inputBytes += bytesRead;
-    if (bytesRead == 0)
-        std::cout << "SHIT!" << std::endl;
-        //closeFd();
+    if (bytesRead == 0) {
+        fd->fd = -1;
+        fd->events = 0;
+        shouldClose = true;
+    }
     std::cout << "###readFd: reading done! bytesRead: " << bytesRead << " inputBytes: " << inputBytes << std::endl;
     lock.unlock();
     cv.notify_one();
@@ -73,6 +75,7 @@ int connection::read(unsigned char * buffer, unsigned int bufferSize)
 {
     if (!bufferSize) return 0;
     unique_lock<mutex> lock(readLock);
+    if (shouldClose) return -1;
     std::cout << "read: bufferSize: " << bufferSize << " inputBytes : " << inputBytes << std::endl;
     while (bufferSize > inputBytes) {
         std::cout << "read: waiting for data to be ready ..." << std::endl;

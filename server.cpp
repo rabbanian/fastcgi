@@ -100,12 +100,12 @@ void server::manage(connection * io)
     request * temp = nullptr;
     unsigned char version, type, paddingLength;
     unsigned int requestId, contentLength;
-    unsigned char * fcgi_header = new unsigned char[FCGI_HEADER_LEN];
+    unsigned char fcgi_header[FCGI_HEADER_LEN];
     unsigned char * fcgi_content_data = nullptr;
     unsigned char * paddingData = nullptr;
 
     while (true) {
-        io->read(fcgi_header, FCGI_HEADER_LEN);
+        if (io->read(fcgi_header, FCGI_HEADER_LEN)) break;
         version = fcgi_header[0];
         type = fcgi_header[1];
         requestId = (fcgi_header[2] << 8) + fcgi_header[3];
@@ -117,9 +117,9 @@ void server::manage(connection * io)
         std::cout << "---contentLength : " << (int) contentLength << std::endl;
         std::cout << "---paddingLength : " << (int) paddingLength << std::endl;
         fcgi_content_data = new unsigned char[contentLength];
-        io->read(fcgi_content_data, contentLength);
+        if (io->read(fcgi_content_data, contentLength)) {delete [] fcgi_content_data; break;}
         paddingData = new unsigned char[paddingLength];
-        io->read(paddingData, paddingLength);
+        if (io->read(paddingData, paddingLength)) {delete [] paddingData; break;}
         delete [] paddingData;
 
         if (reqList == nullptr || reqList->getRequestId() != requestId) {
@@ -132,7 +132,6 @@ void server::manage(connection * io)
     }
     //should I delete fcgi_content_data or not?
     delete temp;
-    delete [] fcgi_header;
     delete io;
 }
 

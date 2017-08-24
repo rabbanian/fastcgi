@@ -2,6 +2,8 @@
 #include "responder.h"
 #include "connection.h"
 #include <iostream>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 
 using namespace fastcgi;
 
@@ -62,6 +64,7 @@ void request::params()
 
 void request::stdIn()
 {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     std::cout << "---contentData is stdIn" << std::endl;
     unsigned char test[196] =
             {

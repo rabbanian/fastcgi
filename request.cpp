@@ -1,9 +1,9 @@
 #include "request.h"
 #include "responder.h"
 #include "connection.h"
+#include "constants.h"
 #include <iostream>
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
+#include <string.h>
 
 using namespace fastcgi;
 
@@ -13,26 +13,48 @@ request::request(connection * writer, unsigned char t, unsigned int reqID, respo
 
 }
 
+request::~request()
+{
+    delete [] paramsData, stdInData, dataData;
+}
+
 int request::control(unsigned char *buffer, unsigned int bufferSize)
 {
     contentData = buffer;
     contentLength = bufferSize;
     switch (type) {
-        case 1:
+        case FCGI_BEGIN_REQUEST:
+            std::cout << "beginRequest();" << std::endl;
             beginRequest();
             break;
-        case 2:
+        case FCGI_ABORT_REQUEST:
+            std::cout << "abortRequest();" << std::endl;
             abortRequest();
             break;
-        case 4:
-            params();
+        case FCGI_PARAMS:
+            std::cout << "params();" << std::endl;
+            streamRecord(paramsOver, &paramsData, paramsLength);
+            handler->setParams(paramsData, paramsLength);
             break;
-        case 5:
-            stdIn();
+        case FCGI_STDIN:
+            std::cout << "stdIn();" << std::endl;
+            streamRecord(stdInOver, &stdInData, stdInLength);
+            handler->setStdIn(stdInData, stdInLength);
             break;
-        case 8:
-            data();
+        case FCGI_DATA:
+            std::cout << "data();" << std::endl;
+            streamRecord(dataOver, &dataData, dataLength);
+            handler->setData(dataData, dataLength);
             break;
+    }
+    std::cout << "Control: paramsOver: " << paramsOver << " stdInOver: " << stdInOver  << " dataOver: " << dataOver << std::endl;
+    if (paramsOver && stdInOver ) {
+        handler->respond();
+        unsigned int size = 0;
+        unsigned char * temp = handler->getBuffer(size);
+        io->write(temp, size);
+        delete [] temp;
+        shouldClose = true;
     }
     if (shouldClose)
         return -1; // in case of the need for closing connection!
@@ -42,7 +64,6 @@ int request::control(unsigned char *buffer, unsigned int bufferSize)
 
 void request::beginRequest()
 {
-    std::cout << "---contentData is beginRequest" << std::endl;
     role = (contentData[0] << 8) + contentData[1];
     flags = contentData[2];
     delete [] contentData;
@@ -50,60 +71,22 @@ void request::beginRequest()
 
 void request::abortRequest()
 {
-
-    std::cout << "---contentData is abortRequest" << std::endl;
     delete [] contentData;
 }
 
-void request::params()
+void request::streamRecord(bool &isOver, unsigned char **data, unsigned int &length)
 {
-
-    std::cout << "---contentData is params" << std::endl;
-    delete [] contentData;
-}
-
-void request::stdIn()
-{
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    std::cout << "---contentData is stdIn" << std::endl;
-    unsigned char test[196] =
-            {
-                    0x01, 0x06, 0x00, 0x01, 0x00, 0xa1, 0x03, 0x00,
-                    0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d,
-                    0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x74, 0x65,
-                    0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x0a,
-                    0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d,
-                    0x4c, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x3a, 0x20,
-                    0x31, 0x31, 0x36, 0x0a, 0x0a, 0x3c, 0x21, 0x44,
-                    0x4f, 0x43, 0x54, 0x59, 0x50, 0x45, 0x20, 0x68,
-                    0x74, 0x6d, 0x6c, 0x3e, 0x0a, 0x3c, 0x68, 0x74,
-                    0x6d, 0x6c, 0x3e, 0x0a, 0x09, 0x3c, 0x68, 0x65,
-                    0x61, 0x64, 0x3e, 0x0a, 0x09, 0x09, 0x3c, 0x74,
-                    0x69, 0x74, 0x6c, 0x65, 0x3e, 0x57, 0x65, 0x6c,
-                    0x6c, 0x63, 0x6f, 0x6d, 0x65, 0x21, 0x3c, 0x2f,
-                    0x74, 0x69, 0x74, 0x6c, 0x65, 0x3e, 0x0a, 0x09,
-                    0x3c, 0x2f, 0x68, 0x65, 0x61, 0x64, 0x3e, 0x0a,
-                    0x09, 0x3c, 0x62, 0x6f, 0x64, 0x79, 0x3e, 0x0a,
-                    0x09, 0x09, 0x3c, 0x68, 0x31, 0x3e, 0x48, 0x65,
-                    0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c,
-                    0x64, 0x21, 0x3c, 0x2f, 0x68, 0x31, 0x3e, 0x0a,
-                    0x09, 0x3c, 0x2f, 0x62, 0x6f, 0x64, 0x79, 0x3e,
-                    0x0a, 0x3c, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x3e,
-                    0x0a, 0x00, 0x00, 0x00, 0x01, 0x06, 0x00, 0x01,
-                    0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x00, 0x01,
-                    0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00
-            };
-    io->write(test, 196);
-    shouldClose = true;
-    delete [] contentData;
-}
-
-void request::data()
-{
-    std::cout << "---contentData is data" << std::endl;
-
-    delete [] contentData;
+    if (!contentLength) {
+        isOver = true;
+        delete [] contentData;
+        return;
+    }
+    unsigned char *temp = new unsigned char[contentLength + length];
+    ::memcpy(temp, *data, length);
+    ::memcpy(temp + length, contentData, contentLength);
+    delete [] *data, contentData;
+    *data = temp;
+    length += contentLength;
 }
 
 unsigned int request::getRequestId()

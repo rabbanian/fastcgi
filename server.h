@@ -3,14 +3,11 @@
 
 namespace fastcgi {
     class responder;
-    class request;
     class connection;
 
     class server {
     private:
         int sockfd;
-
-        request *reqList;
 
         responder * handler;
 

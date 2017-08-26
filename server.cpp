@@ -18,7 +18,6 @@ using namespace fastcgi;
 
 server::server(responder * res, int port /* = 8080 */) : handler(res)
 {
-    reqList = nullptr;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     struct sockaddr_in sockadd;
@@ -122,10 +121,9 @@ void server::manage(connection * io)
         if (io->read(paddingData, paddingLength)) {delete [] paddingData; break;}
         delete [] paddingData;
 
-        if (reqList == nullptr || reqList->getRequestId() != requestId) {
+        if (temp == nullptr) {
             temp = new request(io, type, requestId, handler);
         } else {
-            temp = reqList;
             temp->setType(type);
         }
         if (temp->control(fcgi_content_data, contentLength)) break;

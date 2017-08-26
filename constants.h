@@ -41,6 +41,6 @@
 //0 if this application does not multiplex connections (i.e. handle concurrent requests over each connection), 1 otherwise
 #define FCGI_MPXS_CONNS		0
 
-#define FCGI_BUFFER_SIZE    128
+#define FCGI_BUFFER_SIZE    1024
 
 #endif //FASTCGI_CONSTANTS_H

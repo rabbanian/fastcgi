@@ -16,8 +16,8 @@ namespace fastcgi {
         unsigned char *bodyBuffer = nullptr;
         unsigned int bodyLength = 0;
     protected:
-        void writeHeader(unsigned char * buffer, unsigned int bufferSize);
-        void writeBody(unsigned char * buffer, unsigned int bufferSize);
+        void writeHeader(const void * buffer, unsigned int bufferSize);
+        void writeBody(const void * buffer, unsigned int bufferSize);
     public:
         void setParams(unsigned char *buff, unsigned int size);
         void setStdIn(unsigned char *buff, unsigned int size);

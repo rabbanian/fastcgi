@@ -52,8 +52,23 @@ int request::control(unsigned char *buffer, unsigned int bufferSize)
         handler->respond();
         unsigned int size = 0;
         unsigned char * temp = handler->getBuffer(size);
+        unsigned char recordLengthB1 = (size >> 8) & 0xFF;
+        unsigned char recordLengthB0 = size & 0xFF;
+        unsigned char recordHeader[8] =
+                {
+                        0x01, FCGI_STDOUT, 0x00, 0x01, recordLengthB1, recordLengthB0, 0x00, 0x00
+                };
+        unsigned char recordFooter[24] =
+                {
+                        0x01, FCGI_STDOUT, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                        0x01, FCGI_END_REQUEST, 0x00, 0x01, 0x00, 0x08, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, FCGI_REQUEST_COMPLETE, 0x00, 0x00, 0x00
+                };
+        io->write(recordHeader, 8);
         io->write(temp, size);
+        io->write(recordFooter, 24);
         delete [] temp;
+        if (!(flags & FCGI_KEEP_CONN))
         shouldClose = true;
     }
     if (shouldClose)

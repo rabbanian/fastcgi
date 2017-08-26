@@ -3,7 +3,7 @@
 
 using namespace fastcgi;
 
-void responder::writeHeader(unsigned char *buffer, unsigned int bufferSize)
+void responder::writeHeader(const void *buffer, unsigned int bufferSize)
 {
     unsigned char *temp = new unsigned char[headerLength + bufferSize];
     ::memcpy(temp, headerBuffer, headerLength);
@@ -13,7 +13,7 @@ void responder::writeHeader(unsigned char *buffer, unsigned int bufferSize)
     headerLength += bufferSize;
 }
 
-void responder::writeBody(unsigned char *buffer, unsigned int bufferSize)
+void responder::writeBody(const void *buffer, unsigned int bufferSize)
 {
     unsigned char *temp = new unsigned char[bodyLength + bufferSize];
     ::memcpy(temp, bodyBuffer, bodyLength);

@@ -23,6 +23,8 @@ connection::connection(pollfd *fd) : fd(fd)
 connection::~connection()
 {
     unique_lock<mutex> lock(writeLock);
+    while (!writeDone)
+        writeCv.wait(lock);
     std::cout << "calling ~connection!" << std::endl;
     ::close(fd->fd);
     fd->fd = -1;
@@ -58,6 +60,11 @@ void connection::writeFd()
         if (bytesWrite < outputBytes)
             ::memmove(outputBuffer, outputBuffer + bytesWrite, outputBytes - bytesWrite);
         outputBytes -= bytesWrite;
+    }
+    if (!outputBytes) {
+        writeDone = true;
+        lock.unlock();
+        writeCv.notify_one();
     }
     std::cout << "writeFd: writing done!" << std::endl;
 }
@@ -95,5 +102,6 @@ int connection::write(unsigned char *buffer, unsigned int bufferSize)
         extendBuffer(&outputBuffer, outputBuffSize);
     ::memcpy(outputBuffer + outputBytes, buffer, bufferSize);
     outputBytes += bufferSize;
+    writeDone = false;
     return 0;
 }

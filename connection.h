@@ -9,6 +9,8 @@ namespace fastcgi {
         pollfd * fd;
         bool shouldClose = false;
         std::condition_variable cv;
+        bool writeDone = false;
+        std::condition_variable writeCv;
         unsigned char * inputBuffer = nullptr;
         unsigned int inputBuffSize;
         unsigned int inputBytes;

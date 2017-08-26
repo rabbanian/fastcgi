@@ -2,7 +2,6 @@
 #include "responder.h"
 #include "connection.h"
 #include "constants.h"
-#include <iostream>
 #include <string.h>
 
 using namespace fastcgi;
@@ -24,30 +23,24 @@ int request::control(unsigned char *buffer, unsigned int bufferSize)
     contentLength = bufferSize;
     switch (type) {
         case FCGI_BEGIN_REQUEST:
-            std::cout << "beginRequest();" << std::endl;
             beginRequest();
             break;
         case FCGI_ABORT_REQUEST:
-            std::cout << "abortRequest();" << std::endl;
             abortRequest();
             break;
         case FCGI_PARAMS:
-            std::cout << "params();" << std::endl;
             streamRecord(paramsOver, &paramsData, paramsLength);
             handler->setParams(paramsData, paramsLength);
             break;
         case FCGI_STDIN:
-            std::cout << "stdIn();" << std::endl;
             streamRecord(stdInOver, &stdInData, stdInLength);
             handler->setStdIn(stdInData, stdInLength);
             break;
         case FCGI_DATA:
-            std::cout << "data();" << std::endl;
             streamRecord(dataOver, &dataData, dataLength);
             handler->setData(dataData, dataLength);
             break;
     }
-    std::cout << "Control: paramsOver: " << paramsOver << " stdInOver: " << stdInOver  << " dataOver: " << dataOver << std::endl;
     if (paramsOver && stdInOver ) {
         handler->respond();
         unsigned int size = 0;

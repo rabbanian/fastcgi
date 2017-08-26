@@ -5,8 +5,6 @@
 #include "connection.h"
 #include "constants.h"
 
-#include <iostream>
-
 using namespace fastcgi;
 using namespace std;
 
@@ -25,7 +23,6 @@ connection::~connection()
     unique_lock<mutex> lock(writeLock);
     while (!writeDone)
         writeCv.wait(lock);
-    std::cout << "calling ~connection!" << std::endl;
     ::close(fd->fd);
     fd->fd = -1;
     fd->events = 0;
@@ -45,7 +42,6 @@ void connection::readFd()
         fd->events = 0;
         shouldClose = true;
     }
-    std::cout << "###readFd: reading done! bytesRead: " << bytesRead << " inputBytes: " << inputBytes << std::endl;
     lock.unlock();
     cv.notify_one();
 }
@@ -55,7 +51,6 @@ void connection::writeFd()
     if (!outputBytes) return;
     unique_lock<mutex> lock(writeLock);
     long bytesWrite= ::write(fd->fd, outputBuffer, outputBytes);
-    std::cout << "writeFd: bytesWrite: " << bytesWrite << std::endl;
     if (bytesWrite > 0) {
         if (bytesWrite < outputBytes)
             ::memmove(outputBuffer, outputBuffer + bytesWrite, outputBytes - bytesWrite);
@@ -66,7 +61,6 @@ void connection::writeFd()
         lock.unlock();
         writeCv.notify_one();
     }
-    std::cout << "writeFd: writing done!" << std::endl;
 }
 
 void connection::extendBuffer(unsigned char ** buffer, unsigned int &bufferSize)
@@ -83,15 +77,12 @@ int connection::read(unsigned char * buffer, unsigned int bufferSize)
     if (!bufferSize) return 0;
     unique_lock<mutex> lock(readLock);
     if (shouldClose) return -1;
-    std::cout << "read: bufferSize: " << bufferSize << " inputBytes : " << inputBytes << std::endl;
     while (bufferSize > inputBytes) {
-        std::cout << "read: waiting for data to be ready ..." << std::endl;
         cv.wait(lock);
     }
     ::memcpy(buffer, inputBuffer, bufferSize);
     ::memmove(inputBuffer ,inputBuffer + bufferSize, inputBytes - bufferSize);
     inputBytes -= bufferSize;
-    std::cout << "read: done! inputBytes: " << inputBytes << std::endl;
     return 0;
 }
 

@@ -12,8 +12,6 @@
 #include "request.h"
 #include "connection.h"
 
-#include <iostream>
-
 using namespace fastcgi;
 
 server::server(responder * res, int port /* = 8080 */) : handler(res)
@@ -27,7 +25,6 @@ server::server(responder * res, int port /* = 8080 */) : handler(res)
     sockadd.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int test = bind(sockfd, (struct sockaddr *) &sockadd, sizeof(sockadd));
-    std::cout << "bind says : " << test << std::endl;
 
     conns = new connection*[FCGI_MAX_CONNS];
     fds = new pollfd[FCGI_MAX_CONNS + 1];
@@ -82,7 +79,6 @@ void server::newConn(int fd)
     if (i < FCGI_MAX_CONNS) {
         fds[i].fd = fd;
         fds[i].events = POLLIN | POLLOUT;
-        std::cout << "NEW CONNECTION!" << std::endl << "---------------------" << std::endl;
         connection * temp = new connection(&fds[i]);
         conns[i] = temp;
         std::thread t1(&server::manage, this, temp);
@@ -110,11 +106,6 @@ void server::manage(connection * io)
         requestId = (fcgi_header[2] << 8) + fcgi_header[3];
         contentLength = (fcgi_header[4] << 8) + fcgi_header[5];
         paddingLength = fcgi_header[6];
-        std::cout << "---version : " << (int) version << std::endl;
-        std::cout << "---type : " << (int) type << std::endl;
-        std::cout << "---requestId : " << (int) requestId << std::endl;
-        std::cout << "---contentLength : " << (int) contentLength << std::endl;
-        std::cout << "---paddingLength : " << (int) paddingLength << std::endl;
         fcgi_content_data = new unsigned char[contentLength];
         if (io->read(fcgi_content_data, contentLength)) {delete [] fcgi_content_data; break;}
         paddingData = new unsigned char[paddingLength];

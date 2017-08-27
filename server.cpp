@@ -119,18 +119,6 @@ void server::manage(connection * io)
         }
         if (temp->control(fcgi_content_data, contentLength)) break;
     }
-    //should I delete fcgi_content_data or not?
     delete temp;
     delete io;
 }
-
-/*
-int server::read(int fd, unsigned char * buffer, int bufferSize)
-{
-    int bytesRead = 0, result = 0;
-    while ((result = ::read(fd, buffer + bytesRead, bufferSize - bytesRead)) > 0) {
-        bytesRead += result;
-    }
-    return 0;
-}
- */

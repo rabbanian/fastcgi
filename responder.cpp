@@ -52,3 +52,43 @@ unsigned char * responder::getBuffer(unsigned int &size)
     headerLength = bodyLength = 0;
     return temp;
 }
+
+unsigned char * responder::getHeader(const char * header, unsigned int &size)
+{
+    unsigned int i = 0;
+    size_t headerLength = strlen(header);
+    unsigned int nameLength = 0;
+    unsigned int valueLength = 0;
+    while(i < paramsLength) {
+        if (params[i] >> 7) {
+            nameLength = ((params[i] & 0x7f) << 24) + (params[i + 1] << 16) + (params[i + 2] << 8) + params[i + 3];
+            i += 4;
+        } else {
+            nameLength = params[i];
+            i += 1;
+        }
+        if (params[i] >> 7) {
+            valueLength = ((params[i] & 0x7f) << 24) + (params[i + 1] << 16) + (params[i + 2] << 8) + params[i + 3];
+            i += 4;
+        } else {
+            valueLength = params[i];
+            i += 1;
+        }
+        if (nameLength != headerLength) {
+            i += nameLength + valueLength;
+            continue;
+        }
+        if (strncmp((const char *)&params[i], header, nameLength) == 0) {
+            size = valueLength;
+            return &params[i+ nameLength];
+        }
+
+    }
+    return nullptr;
+}
+
+unsigned char * responder::getStdIn(unsigned int &length)
+{
+    length = stdInLength;
+    return stdIn;
+}

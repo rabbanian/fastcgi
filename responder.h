@@ -18,6 +18,8 @@ namespace fastcgi {
     protected:
         void writeHeader(const void * buffer, unsigned int bufferSize);
         void writeBody(const void * buffer, unsigned int bufferSize);
+        unsigned char *getHeader(const char *header, unsigned int &size);
+        unsigned char *getStdIn(unsigned int &length);
     public:
         void setParams(unsigned char *buff, unsigned int size);
         void setStdIn(unsigned char *buff, unsigned int size);

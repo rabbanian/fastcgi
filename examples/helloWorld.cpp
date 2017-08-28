@@ -1,5 +1,5 @@
-#include "../server.h"
-#include "../responder.h"
+#include "../src/server.h"
+#include "../src/responder.h"
 #include <string.h>
 
 class helloWorld : public fastcgi::responder

@@ -24,7 +24,7 @@ server::server(responder * res, int port /* = 8080 */) : handler(res)
     sockadd.sin_port = htons(port);
     sockadd.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    int test = bind(sockfd, (struct sockaddr *) &sockadd, sizeof(sockadd));
+    bind(sockfd, (struct sockaddr *) &sockadd, sizeof(sockadd));
 
     conns = new connection*[FCGI_MAX_CONNS];
     fds = new pollfd[FCGI_MAX_CONNS + 1];
@@ -97,7 +97,6 @@ void server::manage(connection * io)
     unsigned int requestId, contentLength;
     unsigned char fcgi_header[FCGI_HEADER_LEN];
     unsigned char * fcgi_content_data = nullptr;
-    unsigned char * paddingData = nullptr;
 
     while (true) {
         if (io->read(fcgi_header, FCGI_HEADER_LEN)) break;
@@ -106,11 +105,8 @@ void server::manage(connection * io)
         requestId = (fcgi_header[2] << 8) + fcgi_header[3];
         contentLength = (fcgi_header[4] << 8) + fcgi_header[5];
         paddingLength = fcgi_header[6];
-        fcgi_content_data = new unsigned char[contentLength];
-        if (io->read(fcgi_content_data, contentLength)) {delete [] fcgi_content_data; break;}
-        paddingData = new unsigned char[paddingLength];
-        if (io->read(paddingData, paddingLength)) {delete [] paddingData; break;}
-        delete [] paddingData;
+        fcgi_content_data = new unsigned char[contentLength + paddingLength];
+        if (io->read(fcgi_content_data, contentLength + paddingLength)) {delete [] fcgi_content_data; break;}
 
         if (temp == nullptr) {
             temp = new request(io, type, requestId, handler);
